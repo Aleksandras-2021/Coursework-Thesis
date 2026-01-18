@@ -33,7 +33,6 @@ void pin_to_core(DWORD core)
 }
 #endif
 
-constexpr size_t MATRIX_SIZE = 128;
 constexpr size_t DATA_SIZE = 1024 * 100000;
 
 long long interleaved_sum(const std::vector<long long> &data)
@@ -63,41 +62,31 @@ static void BM_InterleavedSum(benchmark::State &state)
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_InterleavedSum);
+BENCHMARK(BM_InterleavedSum)->MinWarmUpTime(1.0);
 
 
-static void BM_DotProduct(benchmark::State &state)
+static void BM_Sum(benchmark::State &state)
 {
-    const size_t N = DATA_SIZE;
+    std::vector<long long> a(DATA_SIZE);
+    std::vector<long long> b(DATA_SIZE);
+    std::vector<long long> sum(DATA_SIZE);
 
-    static std::vector<float> a(N), b(N);
-    static bool initialized = false;
-
-    if (!initialized)
-    {
-        std::mt19937 rng(123);
-        std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-        for (size_t i = 0; i < N; ++i)
-        {
-            a[i] = dist(rng);
-            b[i] = dist(rng);
-        }
-        initialized = true;
-    }
+    std::iota(a.begin(), a.end(), 1);
+    std::iota(b.begin(), b.end(), 1);
 
     for (auto _ : state)
     {
-        float sum = 0.0f;
-
-        for (size_t i = 0; i < N; ++i)
+        for(int i = 0; i < DATA_SIZE; ++i)
         {
-            sum += a[i] * b[i];
+            sum[i] = a[i] + b[i];
         }
 
         benchmark::DoNotOptimize(sum);
+        benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_DotProduct);
+BENCHMARK(BM_Sum)->MinWarmUpTime(1.0);
+
 
 static void BM_process_data_nohint(benchmark::State &state)
 {
@@ -123,7 +112,7 @@ static void BM_process_data_nohint(benchmark::State &state)
         benchmark::DoNotOptimize(sum);
     }
 }
-BENCHMARK(BM_process_data_nohint);
+BENCHMARK(BM_process_data_nohint)->MinWarmUpTime(1.0);;
 
 static void BM_process_data_withhint(benchmark::State &state)
 {
@@ -148,7 +137,7 @@ static void BM_process_data_withhint(benchmark::State &state)
         benchmark::DoNotOptimize(sum);
     }
 }
-BENCHMARK(BM_process_data_withhint);
+BENCHMARK(BM_process_data_withhint)->MinWarmUpTime(1.0);;
 
 
 int main(int argc, char **argv)
